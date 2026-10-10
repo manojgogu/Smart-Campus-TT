@@ -36,7 +36,15 @@ Vite serves the app at `http://localhost:3000`. Set `VITE_API_URL` to override t
 
 The Spring Boot API preserves the frontend's `/api` routes for authentication, incident reporting and tracking, notifications, response teams, locations, and admin dashboards. Requests use `Authorization: Bearer <token>`. Notification updates are polled every 10 seconds; the previous Socket.IO transport was removed during the backend migration.
 
-The MongoDB collection names and core document fields remain compatible with the previous backend. Admin accounts must be created directly in the database or through a trusted provisioning process; public registration accepts student, faculty, and security roles only.
+The API routes and core document fields remain compatible with the previous backend. Admin accounts must be created through a trusted provisioning process; public registration accepts student, faculty, and security roles only.
+
+## Deploy the backend to Render
+
+The Render Blueprint at the repository root creates a PostgreSQL database and a Docker web service in Singapore. The service uses `backend/` as its root directory, exposes `/api/health` as its health check, and sets the Vercel frontend origin for CORS. In Render, choose **New + → Blueprint**, connect this repository, and apply the Blueprint. Render will generate `JWT_SECRET` and connect the service to the database. The Blueprint currently selects Render's free plans for a demo: free Postgres expires after 30 days, so select a paid database plan before applying it if you need to keep real data long-term.
+
+After Render deploys the service, copy its `https://…onrender.com` URL into the Vercel project's `VITE_API_URL` environment variable with `/api` at the end (for example, `https://your-api.onrender.com/api`), then redeploy the frontend. The free Render web service may sleep while idle; uploaded files are stored on the service filesystem and are not durable across rebuilds or restarts without persistent storage.
+
+PostgreSQL stores application records in a JSONB document table so the existing API fields remain compatible. The old MongoDB data is not migrated automatically; the Render database starts empty. Create the initial admin account through a trusted provisioning process after deployment.
 
 ## Emergency guidance
 
