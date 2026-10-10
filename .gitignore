@@ -1,0 +1,8 @@
+# CampusSafe
+node_modules/
+dist/
+build/
+.env
+uploads/
+*.log
+.DS_Store
