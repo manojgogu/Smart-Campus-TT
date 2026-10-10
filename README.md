@@ -1,74 +1,43 @@
-# CampusSafe — Smart Campus Emergency Reporting & Response Management
+# CampusSafe
 
-A polished, animated, production-style MERN platform for campus emergencies: report-to-resolution workflow with real-time alerts, live maps and analytics.
+CampusSafe is a campus emergency reporting and response application with a React frontend and Spring Boot backend. The existing frontend pages, components, and styling are retained.
 
-## Architecture
+## Stack
 
-```
-Smart Campus TT/
-├── frontend/          # React + Vite + Tailwind + Framer Motion + Leaflet + Recharts
-│   └── src/
-│       ├── components/  Navbar, Footer, ProtectedRoute, IncidentMap
-│       ├── pages/       Landing, Login, Register, Student/Security/Admin dashboards,
-│       │                ReportEmergency, TrackIncident, IncidentDetails, MapView, Profile
-│       ├── layouts/     PublicLayout, DashboardLayout
-│       ├── context/     Auth, Theme, Socket, Toast
-│       ├── services/    api (axios + JWT)
-│       ├── animations/  variants
-│       └── utils/       helpers (colors, CSV, dates)
-└── backend/           # Express + Mongoose + JWT + Socket.IO + Multer
-    ├── config/ models/ controllers/ routes/ middleware/ sockets/ utils/ scripts/
-    └── server.js
-```
-
-**Data flow:** Student submits SOS → `POST /api/incidents` → MongoDB + `incident:new` socket event to `role:security/admin` rooms → Security acknowledges/assigns/resolves → `incident:updated` pushed to reporter + roles → Notifications persisted + toasts + bell badge.
-
-## Prerequisites
-
-- Node.js 18+, MongoDB (local or Atlas)
+- Frontend: React 18, Vite, Tailwind CSS, React Router, Leaflet, Recharts
+- Backend: Java 17, Spring Boot 3, Spring Data MongoDB
+- Database: MongoDB
+- Authentication: JWT bearer tokens and BCrypt password hashes
 
 ## Run locally
 
-### 1. Backend
+### Backend
+
+Install Java 17+, Maven, and MongoDB. From `backend/`, configure `MONGO_URI` and `JWT_SECRET`, then run:
+
 ```bash
-cd backend
-cp .env.example .env        # fill MONGO_URI, JWT_SECRET
-npm install
-npm run seed                # creates demo users + incidents (demo data)
-node scripts/createAdmin.js # or ensure admin exists
-npm run dev                 # http://localhost:5000
+mvn spring-boot:run
 ```
 
-Demo logins after seeding: `student@campus.edu`, `faculty@campus.edu`, `security@campus.edu` / `Password@123`; admin = your `ADMIN_SEED_*`.
+The API starts at `http://localhost:5000`. Defaults are `mongodb://127.0.0.1:27017/campussafe` and port `5000`. Set `CLIENT_URL` if the Vite frontend uses a different origin. Uploaded images are stored under `backend/uploads/` by default.
 
-### 2. Frontend
+### Frontend
+
+From `frontend/`, run:
+
 ```bash
-cd frontend
-cp .env.example .env
 npm install
-npm run dev                 # http://localhost:5173
+npm run dev
 ```
 
-## Key API routes
+Vite serves the app at `http://localhost:3000`. Set `VITE_API_URL` to override the API base URL (default `http://localhost:5000/api`).
 
-| Method | Route | Access |
-|---|---|---|
-| POST | `/api/auth/register` (student/faculty/security only) | public |
-| POST | `/api/auth/login` | public |
-| POST | `/api/incidents` (multipart, image ≤5MB) | student/faculty |
-| GET | `/api/incidents/my`, `/my/stats` | owner |
-| GET | `/api/incidents?active=true&priority=&status=` | security/admin |
-| GET/PATCH | `/api/incidents/:id`, `/:id/status` | role-checked |
-| GET | `/api/admin/stats`, `/admin/users` | admin |
-| GET | `/api/notifications` | auth (role-filtered) |
+## API
 
-Socket.IO namespaces: rooms `role:<role>`, `user:<id>`; events `notification`, `incident:new`, `incident:updated`. Frontend polls `/notifications` every 30s as fallback.
+The Spring Boot API preserves the frontend's `/api` routes for authentication, incident reporting and tracking, notifications, response teams, locations, and admin dashboards. Requests use `Authorization: Bearer <token>`. Notification updates are polled every 10 seconds; the previous Socket.IO transport was removed during the backend migration.
 
-## Notes & safety
+The MongoDB collection names and core document fields remain compatible with the previous backend. Admin accounts must be created directly in the database or through a trusted provisioning process; public registration accepts student, faculty, and security roles only.
 
-- Landing-page statistics are **clearly labeled demo data** until the backend provides real counts.
-- Emergency disclaimer shown on landing, dashboards and report form: this app **supplements, does not replace** local emergency services.
-- Admins cannot self-register; use `scripts/createAdmin.js` or `seed.js`.
-- Image uploads stored in `backend/uploads/` (gitignored); serve via `/uploads/<file>`.
-- Passwords hashed with bcrypt; JWT in `Authorization: Bearer`; rate limits on auth + report endpoints; backend enforces all role checks.
-- Map default center is a demo coordinate — update `CAMPUS_CENTER` in `IncidentMap.jsx` to your campus.
+## Emergency guidance
+
+CampusSafe supplements campus response procedures and does not replace local emergency services. For immediate danger, contact local emergency services first.

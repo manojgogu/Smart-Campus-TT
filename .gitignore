@@ -1,4 +1,5 @@
 # CampusSafe
+.tools/
 node_modules/
 dist/
 build/
